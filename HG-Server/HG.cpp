@@ -7729,6 +7729,13 @@ void CGame::ClientCommonHandler(int iClientH, char * pData)
 		RequestAcceptJoinPartyHandler(iClientH, iV1);
 		break;
 
+	case COMMONTYPE_REQ_GETNPCHP:
+		if ((iV1 - 10000 == 0) || (iV1 - 10000 >= MAXNPCS)) return;
+		if (m_pNpcList[iV1 - 10000] == NULL) return;
+		if (m_pNpcList[iV1 - 10000]->m_iHP > m_pNpcList[iV1 - 10000]->m_iMaxHP) m_pNpcList[iV1 - 10000]->m_iMaxHP = m_pNpcList[iV1 - 10000]->m_iHP;
+		SendNotifyMsg(NULL, iClientH, SEND_NPCHP, m_pNpcList[iV1 - 10000]->m_iHP, m_pNpcList[iV1 - 10000]->m_iMaxHP, NULL, NULL);
+		break;
+
 	case COMMONTYPE_SETGUILDTELEPORTLOC:
 		RequestSetGuildTeleportLocHandler(iClientH, iV1, iV2, m_pClientList[iClientH]->m_iGuildGUID, pString);
 		break;
@@ -10315,6 +10322,18 @@ void CGame::SendNotifyMsg(int iFromH, int iToH, WORD wMsgType, DWORD sV1, DWORD 
 	case NOTIFY_NOMATCHINGCRAFTING:
 	case NOTIFY_NO_CRAFT_CONTRIB: 
 		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 6);
+		break;
+
+		//50Cent - HP Bar
+	case SEND_NPCHP:
+		ip = (int *)cp;
+		*ip = (int)sV1;
+		cp += 4;
+
+		ip = (int *)cp;
+		*ip = (int)sV2;
+		cp += 4;
+		iRet = m_pClientList[iToH]->m_pXSock->iSendMsg(cData, 14);
 		break;
 
 	case NOTIFY_SUPERATTACKLEFT:
@@ -13395,7 +13414,7 @@ if ((m_bHeldenianMode) && (m_pMapList[caster->m_cMapIndex]->m_bIsHeldenianMap ==
 				switch (cOwnerType) {
 				case OWNERTYPE_PLAYER:
 					if (m_pClientList[sOwnerH] == NULL) goto MAGIC_NOEFFECT;
-					if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_RAGE] != 0) goto MAGIC_NOEFFECT;
+		//			if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_RAGE] != 0) goto MAGIC_NOEFFECT;
 					if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[ MAGICTYPE_BERSERK ] != 0) goto MAGIC_NOEFFECT;
 					m_pClientList[sOwnerH]->m_cMagicEffectStatus[ MAGICTYPE_BERSERK ] = (char)spell->m_sValue[MAGICV_TYPE];
 					m_pClientList[sOwnerH]->SetStatusFlag(STATUS_BERSERK, TRUE);
@@ -13432,6 +13451,42 @@ if ((m_bHeldenianMode) && (m_pMapList[caster->m_cMapIndex]->m_bIsHeldenianMap ==
 				switch (cOwnerType) {
 				case OWNERTYPE_PLAYER:
 					if (m_pClientList[sOwnerH] == NULL) goto MAGIC_NOEFFECT;
+					if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_RAGE] != 0) goto MAGIC_NOEFFECT;
+					if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_BERSERK] != 0) goto MAGIC_NOEFFECT;
+					m_pClientList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_RAGE] = (char)spell->m_sValue[MAGICV_TYPE];
+					m_pClientList[sOwnerH]->SetStatusFlag(STATUS_RAGE, TRUE);
+					break;
+
+				case OWNERTYPE_NPC:
+					if (m_pNpcList[sOwnerH] == NULL) goto MAGIC_NOEFFECT;
+					if (m_pNpcList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_BERSERK] != 0) goto MAGIC_NOEFFECT;
+					if (m_pNpcList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_RAGE] != 0) goto MAGIC_NOEFFECT;
+
+					if (m_pNpcList[sOwnerH]->m_cActionLimit != 0) goto MAGIC_NOEFFECT;
+
+					if (caster->m_side != m_pNpcList[sOwnerH]->m_side) goto MAGIC_NOEFFECT;
+
+					m_pNpcList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_RAGE] = (char)spell->m_sValue[MAGICV_TYPE];
+					m_pNpcList[sOwnerH]->SetStatusFlag(STATUS_RAGE, TRUE);
+					break;
+				}
+
+				RegisterDelayEvent(DELAYEVENTTYPE_MAGICRELEASE, MAGICTYPE_RAGE, dwTime + (spell->m_dwLastTime * 1000),
+					GetUnit(sOwnerH, cOwnerType), NULL, NULL, NULL, spell->m_sValue[MAGICV_TYPE], NULL, NULL);
+
+				if (cOwnerType == OWNERTYPE_PLAYER)
+					SendNotifyMsg(NULL, sOwnerH, NOTIFY_MAGICEFFECTON, MAGICTYPE_RAGE, spell->m_sValue[MAGICV_TYPE], NULL, NULL);
+				break;
+			}
+			break;
+
+	/*	switch (spell->m_sValue[MAGICV_TYPE]) {
+			case 1:
+				m_pMapList[caster->m_cMapIndex]->GetOwner(&sOwnerH, &cOwnerType, dX, dY);
+
+				switch (cOwnerType) {
+				case OWNERTYPE_PLAYER:
+					if (m_pClientList[sOwnerH] == NULL) goto MAGIC_NOEFFECT;
 					if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_BERSERK] != 0) goto MAGIC_NOEFFECT;
 					if (m_pClientList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_RAGE] != 0) goto MAGIC_NOEFFECT;
 					m_pClientList[sOwnerH]->m_cMagicEffectStatus[MAGICTYPE_RAGE] = (char)spell->m_sValue[MAGICV_TYPE];
@@ -13446,7 +13501,9 @@ if ((m_bHeldenianMode) && (m_pMapList[caster->m_cMapIndex]->m_bIsHeldenianMap ==
 					SendNotifyMsg(NULL, sOwnerH, NOTIFY_MAGICEFFECTON, MAGICTYPE_RAGE, spell->m_sValue[MAGICV_TYPE], NULL, NULL);
 				break;
 			}
-			break;
+			break;*/
+
+
 		//----------------------
 		case MAGICTYPE_DAMAGE_AREA_ARMOR_BREAK:
 
@@ -23117,26 +23174,22 @@ void CGame::CalcTotalItemEffect(int iClientH, int iEquipItemID, bool bNotify)
 
 				case 16: // Angel STR//AngelicPendant(STR)
 					player->SetAngelStr(
-						((item->m_dwAttribute & 0xF0000000) >> 28) + 1
-						);
+						(item->m_dwAttribute & 0xF0000000) >> 28);
 					SetAngel(iClientH, OWNERTYPE_PLAYER, 1);
 					break;
 				case 17: // Angel DEX //AngelicPendant(DEX)
 					player->SetAngelDex(
-						((item->m_dwAttribute & 0xF0000000) >> 28) + 1
-						);
+						(item->m_dwAttribute & 0xF0000000) >> 28);
 					SetAngel(iClientH, OWNERTYPE_PLAYER, 2);
 					break;
 				case 18: // Angel INT//AngelicPendant(INT)
 					player->SetAngelInt(
-						((item->m_dwAttribute & 0xF0000000) >> 28) + 1
-						);
+						(item->m_dwAttribute & 0xF0000000) >> 28);
 					SetAngel(iClientH, OWNERTYPE_PLAYER, 3);
 					break;
 				case 19: // Angel MAG//AngelicPendant(MAG)
 					player->SetAngelMag(
-						((item->m_dwAttribute & 0xF0000000) >> 28) + 1
-						);
+						(item->m_dwAttribute & 0xF0000000) >> 28);
 					SetAngel(iClientH, OWNERTYPE_PLAYER, 4);
 					break;
 				}
@@ -37391,7 +37444,7 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 				SendNotifyMsg(NULL, iClientH, NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL);
 				return;
 			}
-			if(iValue >= 15) {
+			if(iValue >= 10) {
 				SendNotifyMsg(NULL, iClientH, NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL);
 				return;
 			}
@@ -37406,11 +37459,6 @@ void CGame::RequestItemUpgradeHandler(int iClientH, int iItemIndex)
 			case 7: sItemUpgrade = 29; break;
 			case 8: sItemUpgrade = 34; break;
 			case 9: sItemUpgrade = 39; break;
-			case 10: sItemUpgrade = 44; break;
-			case 11: sItemUpgrade = 49; break;
-			case 12: sItemUpgrade = 54; break;
-			case 13: sItemUpgrade = 59; break;
-			case 14: sItemUpgrade = 64; break;
 			default:
 				SendNotifyMsg(NULL, iClientH, NOTIFY_ITEMUPGRADEFAIL, 3, NULL, NULL, NULL);
 				return;
@@ -38462,7 +38510,7 @@ bool CGame::bCheckClientMagicFrequency(int iClientH)
 		if (dwTimeGap < 1200) {
 			wsprintf(g_cTxt, "(-~-HACKING-~-) Speed hacker detected(%s) - magic(%i). BI banned", player->m_cCharName, dwTimeGap);
 			PutLogList(g_cTxt);
-			DeleteClient(iClientH, TRUE, TRUE);
+		//	DeleteClient(iClientH, TRUE, TRUE);
 
 			return FALSE;
 		}else if(dwTimeGap < 1950) {
@@ -38514,7 +38562,7 @@ bool CGame::bCheckClientMoveFrequency(int iClientH, BOOL running)
 			{
 				wsprintf(g_cTxt, "(-~-HACKING-~-) Speed hacker detected(%s) - run-avg(%i). BI banned", player->m_cCharName, sum/7);
 				PutLogList(g_cTxt);
-				DeleteClient(iClientH, TRUE, TRUE, TRUE, TRUE);
+			//	DeleteClient(iClientH, TRUE, TRUE, TRUE, TRUE);
 			}else if(sum < 285*7)
 			{
 				wsprintf(g_cTxt, "(-~-HACKING-~-) Speed hack suspect(%s) - run-avg(%i)", player->m_cCharName, sum/7);
@@ -38534,7 +38582,7 @@ bool CGame::bCheckClientMoveFrequency(int iClientH, BOOL running)
 			{
 				wsprintf(g_cTxt, "(-~-HACKING-~-) Speed hacker detected(%s) - move-avg(%i). BI banned", player->m_cCharName, sum/7);
 			PutLogList(g_cTxt);
-				DeleteClient(iClientH, TRUE, TRUE, TRUE, TRUE);
+				//DeleteClient(iClientH, TRUE, TRUE, TRUE, TRUE);
 			}else if(sum < 475*7)
 			{
 				wsprintf(g_cTxt, "(-~-HACKING-~-) Speed hack suspect(%s) - move-avg(%i)", player->m_cCharName, sum/7);

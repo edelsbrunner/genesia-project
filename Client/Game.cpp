@@ -51,7 +51,7 @@ void CGame::ReadSettings()
 
 	uint32 val;
 	if((val = ReadSettingsVar("ShowFPS")) == -1) 
-		m_bShowFPS = FALSE;
+		m_bShowFPS = TRUE;
 	else
 		m_bShowFPS = val;
 
@@ -61,7 +61,7 @@ void CGame::ReadSettings()
 		m_showGrid = val;
 
 	if((val = ReadSettingsVar("ShowAllDmg")) == -1) 
-		m_showAllDmg = FALSE;
+		m_showAllDmg = TRUE;
 	else
 		m_showAllDmg = val;
 
@@ -80,7 +80,7 @@ void CGame::ReadSettings()
 	else
 		m_partyAutoAccept = val;
 
-	if((val = ReadSettingsVar("DetailLevel")) == -1) 
+	if((val = ReadSettingsVar("DetailLevel")) == 3) 
 		m_cDetailLevel = FALSE;
 	else
 		m_cDetailLevel = val;
@@ -106,7 +106,7 @@ void CGame::ReadSettings()
 		m_tabbedNotification = val;
 
 	if((val = ReadSettingsVar("ManuAutoFill")) == -1) 
-		m_manuAutoFill = FALSE;
+		m_manuAutoFill = TRUE;
 	else
 		m_manuAutoFill = val;
 
@@ -114,6 +114,14 @@ void CGame::ReadSettings()
 		m_showTimeStamp = FALSE;
 	else
 		m_showTimeStamp = val;
+
+	if ((val = ReadSettingsVar("NPC bar")) == -1)
+		m_npcbar = TRUE;
+	else
+		m_npcbar = val;
+
+
+
 
 	uint32 ret;
 	ret = ReadSettingsVar("Magic");
@@ -155,7 +163,7 @@ uint32 CGame::ReadSettingsVar(const char * var)
 
 	uint32 val;
 	DWORD size = sizeof(uint32);
-	if( RegCreateKeyEx( HKEY_CURRENT_USER, "Software\\Siementech\\Helbreath\\Settings", 0, NULL, 
+	if( RegCreateKeyEx( HKEY_CURRENT_USER, "Software\\Siementech\\hbgenesia\\Settings", 0, NULL, 
 		REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &dwDisp ) != ERROR_SUCCESS ) 
 		return -1;
 
@@ -184,6 +192,7 @@ void CGame::WriteSettings()
 	WriteSettingsVar("TabbedNotification", m_tabbedNotification);
 	WriteSettingsVar("ManuAutoFill", m_manuAutoFill);
 	WriteSettingsVar("TimeStamp", m_showTimeStamp);
+	WriteSettingsVar("NPCbar", m_npcbar);
 
 	if( m_sMagicShortCut >= 0 && m_sMagicShortCut < 100 ) 
 		WriteSettingsVar("Magic", m_sMagicShortCut + 1);
@@ -211,7 +220,7 @@ void CGame::WriteSettingsVar(const char * var, uint32 val)
 
 	;
 	DWORD size = sizeof(uint32);
-	if( RegCreateKeyEx( HKEY_CURRENT_USER, "Software\\Siementech\\Helbreath\\Settings", 0, NULL, 
+	if( RegCreateKeyEx( HKEY_CURRENT_USER, "Software\\Siementech\\hbgenesia\\Settings", 0, NULL, 
 		REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &dwDisp ) != ERROR_SUCCESS ) 
 		return;
 
@@ -230,6 +239,8 @@ CGame::CGame()
 #else
 	m_bToggleScreen = FALSE;
 #endif
+
+	m_iTotalUsers = 0;
 
 	m_cLoading = 0;
 	m_bZoomMap = TRUE;
@@ -581,6 +592,12 @@ CGame::CGame()
 	m_stDialogBoxInfo[51].sY = 57;
 	m_stDialogBoxInfo[51].sSizeX = 258;
 	m_stDialogBoxInfo[51].sSizeY = 339;
+
+	// Extended menu Dialog
+	m_stDialogBoxInfo[52].sX = 358;
+	m_stDialogBoxInfo[52].sY = 65;
+	m_stDialogBoxInfo[52].sSizeX = 258;
+	m_stDialogBoxInfo[52].sSizeY = 339;
 
 	// DK Weapons Dialog - Jehovah
 	m_stDialogBoxInfo[53].sX = 358;
@@ -2303,14 +2320,35 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 						break;
 					}
 				}else // sprites 100..199: Trees and tree shadows
-				{	m_pTileSpr[sObjSpr]->_GetSpriteRect(ix - 16, iy - 16, sObjSprFrame);
-					if (m_cDetailLevel==0)
-					{	if( sObjSpr < 100 + 11 ) m_pTileSpr[100 + 4]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
+				{	if (m_cDetailLevel == 0 || !m_bigTrees)
+					{	if ( sObjSpr < 100 + 11 )
+						{	if ((m_pTileSpr[100 + 4]->m_rcBound.top <= m_rcPlayerRect.top) && (m_pTileSpr[100 + 4]->m_rcBound.bottom >= m_rcPlayerRect.bottom) &&
+							(m_pTileSpr[100 + 4]->m_rcBound.left <= m_rcPlayerRect.left) && (m_pTileSpr[100 + 4]->m_rcBound.right >= m_rcPlayerRect.right))
+								 m_pTileSpr[100 + 4]->PutTransSprite2(ix - 16, iy - 16, sObjSprFrame, dwTime);
+							else m_pTileSpr[100 + 4]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
+						}else if ( sObjSpr < 100 + 23 )
+						{	if ((m_pTileSpr[100 + 9]->m_rcBound.top <= m_rcPlayerRect.top) && (m_pTileSpr[100 + 9]->m_rcBound.bottom >= m_rcPlayerRect.bottom) &&
+							(m_pTileSpr[100 + 9]->m_rcBound.left <= m_rcPlayerRect.left) && (m_pTileSpr[100 + 9]->m_rcBound.right >= m_rcPlayerRect.right))
+								 m_pTileSpr[100 + 9]->PutTransSprite2(ix - 16, iy - 16, sObjSprFrame, dwTime);
+							else m_pTileSpr[100 + 9]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
+						}else if ( sObjSpr < 100 + 32 )
+						{	if ((m_pTileSpr[100 + 23]->m_rcBound.top <= m_rcPlayerRect.top) && (m_pTileSpr[100 + 23]->m_rcBound.bottom >= m_rcPlayerRect.bottom) &&
+							(m_pTileSpr[100 + 23]->m_rcBound.left <= m_rcPlayerRect.left) && (m_pTileSpr[100 + 23]->m_rcBound.right >= m_rcPlayerRect.right))
+								 m_pTileSpr[100 + 23]->PutTransSprite2(ix - 16, iy - 16, sObjSprFrame, dwTime);
+							else m_pTileSpr[100 + 23]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
+						}else
+						{	if ((m_pTileSpr[100 + 32]->m_rcBound.top <= m_rcPlayerRect.top) && (m_pTileSpr[100 + 32]->m_rcBound.bottom >= m_rcPlayerRect.bottom) &&
+							(m_pTileSpr[100 + 32]->m_rcBound.left <= m_rcPlayerRect.left) && (m_pTileSpr[100 + 32]->m_rcBound.right >= m_rcPlayerRect.right))
+								 m_pTileSpr[100 + 32]->PutTransSprite2(ix - 16, iy - 16, sObjSprFrame, dwTime);
+							else m_pTileSpr[100 + 32]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
+						}
+						/*if( sObjSpr < 100 + 11 ) m_pTileSpr[100 + 4]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
 						else if( sObjSpr < 100 + 23 ) m_pTileSpr[100 + 9]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
 						else if( sObjSpr < 100 + 32 ) m_pTileSpr[100 + 23]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
-						else m_pTileSpr[100 + 32]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
+						else m_pTileSpr[100 + 32]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);*/
 					}else
-					{	if ((bIsPlayerDrawed == TRUE) && (m_pTileSpr[sObjSpr]->m_rcBound.top <= m_rcPlayerRect.top) && (m_pTileSpr[sObjSpr]->m_rcBound.bottom >= m_rcPlayerRect.bottom) &&
+					{	//Druncncity crash fixed
+						if ((bIsPlayerDrawed == TRUE) && (m_pTileSpr[sObjSpr] != 0) && (m_pTileSpr[sObjSpr]->m_rcBound.top <= m_rcPlayerRect.top) && (m_pTileSpr[sObjSpr]->m_rcBound.bottom >= m_rcPlayerRect.bottom) &&
 							(m_cDetailLevel >= 2) && (m_pTileSpr[sObjSpr]->m_rcBound.left <= m_rcPlayerRect.left) && (m_pTileSpr[sObjSpr]->m_rcBound.right >= m_rcPlayerRect.right))
 						{	m_pTileSpr[sObjSpr + 50]->PutFadeSprite(ix , iy , sObjSprFrame, dwTime);
 							m_pTileSpr[sObjSpr]->PutTransSprite2(ix - 16, iy - 16, sObjSprFrame, dwTime);
@@ -2319,7 +2357,8 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 							m_pTileSpr[sObjSpr]->PutSpriteFast(ix - 16, iy - 16, sObjSprFrame, dwTime);
 						}
 						if (m_bIsXmas == TRUE)
-						{	if (G_cSpriteAlphaDegree == 2) // nuit
+						{
+							if (G_cSpriteAlphaDegree == 2) // nuit
 							{	if( iXmasTreeBulbDelay < 0 || iXmasTreeBulbDelay > idelay + 1) iXmasTreeBulbDelay = 0;
 								if( iXmasTreeBulbDelay > idelay )
 								{	for (int i = 0; i < 100; i++) {
@@ -2332,7 +2371,14 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 								for (int j = 0; j < 100; j++)
 								{	if( m_pTileSpr[sObjSpr]->_bCheckCollison(ix-16, iy-16, sObjSprFrame, ix + ix1[j], iy + iy2[j]) )
 									{	m_pEffectSpr[66+(j%6)]->PutTransSprite(ix + ix1[j], iy + iy2[j], (iXmasTreeBulbDelay>>2), dwTime);
-			}	}	}	}	}	}	}
+									}		
+								}	
+							}	
+						}
+					}	
+				}
+			}
+
 
 			// Dynamic Object
 			if ( (bRet == TRUE) && (sDynamicObject != NULL) ) 
@@ -3791,6 +3837,11 @@ void CGame::OnTimer()
 			CreateScreenShot();		
 		}
 
+		if ((dwTime - m_dwCheckWhoTime) > 5000)
+		{
+			m_dwCheckWhoTime = dwTime;
+			bSendCommand(MSGID_COMMAND_CHATMSG, NULL, NULL, NULL, NULL, NULL, "/who");
+		}
 
 		if ((dwTime - m_dwCheckChatTime) > 2000)
 		{	m_dwCheckChatTime = m_dwTime;
@@ -3972,6 +4023,9 @@ BOOL CGame::_bCheckDlgBoxClick(short msX, short msY)
 				break;
 			case 51:
 				DlgBoxClick_CMDHallMenu(msX, msY);
+				break;
+			case 52://50Cent - GMPanel
+				DlgBoxClick_GMPanel(msX, msY);
 				break;
 			case 53:
 				DlgBoxClick_DKMenuWeapons(msX, msY);
@@ -8434,6 +8488,7 @@ BOOL   CGame::DrawObject_OnAttack(int indexX, int indexY, int sX, int sY, BOOL b
 	}else if( strlen(_tmp_cName) > 0 )
 	{	if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX, sY, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX, sY, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 	if (_tmp_iChatIndex != NULL)
 	{	if ((m_pChatMsgList[_tmp_iChatIndex] != NULL) && (m_pChatMsgList[_tmp_iChatIndex]->m_iObjectID == _tmp_wObjectID))
@@ -9009,6 +9064,7 @@ BOOL   CGame::DrawObject_OnAttackMove(int indexX, int indexY, int sX, int sY, BO
 	{
 		if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX+dx, sY+dy, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX+dx, sY+dy, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 
 	if (_tmp_iChatIndex != NULL) 
@@ -9272,6 +9328,7 @@ BOOL   CGame::DrawObject_OnMagic(int indexX, int indexY, int sX, int sY, BOOL bT
 	}else if( strlen(_tmp_cName) > 0 )
 	{	if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX, sY, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX, sY, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 	if (_tmp_iChatIndex != NULL)
 	{	if ((m_pChatMsgList[_tmp_iChatIndex] != NULL) && (m_pChatMsgList[_tmp_iChatIndex]->m_iObjectID == _tmp_wObjectID))
@@ -9516,6 +9573,7 @@ BOOL   CGame::DrawObject_OnGetItem(int indexX, int indexY, int sX, int sY, BOOL 
 	}else if( strlen(_tmp_cName) > 0 )
 	{	if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX, sY, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX, sY, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 	if (_tmp_iChatIndex != NULL)
 	{	if ((m_pChatMsgList[_tmp_iChatIndex] != NULL) && (m_pChatMsgList[_tmp_iChatIndex]->m_iObjectID == _tmp_wObjectID))
@@ -10232,6 +10290,7 @@ BOOL CGame::DrawObject_OnDamage(int indexX, int indexY, int sX, int sY, BOOL bTr
 	}else if( strlen(_tmp_cName) > 0 )
 	{	if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX, sY, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX, sY, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 	if (_tmp_iChatIndex != NULL)
 	{	if ((m_pChatMsgList[_tmp_iChatIndex] != NULL) && (m_pChatMsgList[_tmp_iChatIndex]->m_iObjectID == _tmp_wObjectID))
@@ -10634,6 +10693,7 @@ BOOL CGame::DrawObject_OnDying(int indexX, int indexY, int sX, int sY, BOOL bTra
 	}else if( strlen(_tmp_cName) > 0 )
 	{	if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX, sY, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX, sY, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 	if (_tmp_iChatIndex != NULL)
 	{	if ((m_pChatMsgList[_tmp_iChatIndex] != NULL) && (m_pChatMsgList[_tmp_iChatIndex]->m_iObjectID == _tmp_wObjectID))
@@ -10927,6 +10987,7 @@ BOOL   CGame::DrawObject_OnDead(int indexX, int indexY, int sX, int sY, BOOL bTr
 	{	
 		if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX, sY, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX, sY, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 
 	if (_tmp_iChatIndex != NULL)
@@ -11542,6 +11603,7 @@ BOOL   CGame::DrawObject_OnMove(int indexX, int indexY, int sX, int sY, BOOL bTr
 	}else if( strlen(_tmp_cName) > 0 )
 	{	if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX+dx, sY+dy, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX+dx, sY+dy, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 
 	if (_tmp_iChatIndex != NULL)
@@ -12011,6 +12073,7 @@ BOOL CGame::DrawObject_OnDamageMove(int indexX, int indexY, int sX, int sY, BOOL
 	}else if( strlen(_tmp_cName) > 0 )
 	{	if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX+dx, sY+dy, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX+dx, sY+dy, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 	if (_tmp_iChatIndex != NULL)
 	{	if ((m_pChatMsgList[_tmp_iChatIndex] != NULL) && (m_pChatMsgList[_tmp_iChatIndex]->m_iObjectID == _tmp_wObjectID))
@@ -13743,10 +13806,6 @@ void CGame::LogResponseHandler(char * pData)
 			ZeroMemory(m_cGameServerName, sizeof(m_cGameServerName));
 			memcpy(m_cGameServerName, cp, 20);
 			cp += 20;
-			
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
 			m_pGSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
 			if (m_iGameServerMode == 1)
 			{	m_pGSock->bConnect(m_cLogServerAddr, iGameServerPort, WM_USER_GAMESOCKETEVENT);
@@ -15537,6 +15596,7 @@ BOOL   CGame::DrawObject_OnRun(int indexX, int indexY, int sX, int sY, BOOL bTra
 	}else if( strlen(_tmp_cName) > 0 )
 	{	if( (_tmp_sOwnerType>=1) && (_tmp_sOwnerType<=6) ) DrawObjectName(sX+dx, sY+dy, _tmp_cName, _tmp_iStatus);
 		else DrawNpcName(sX+dx, sY+dy, _tmp_sOwnerType, _tmp_iStatus);
+		bSendCommand(MSGID_COMMAND_COMMON, COMMONTYPE_REQ_GETNPCHP, NULL, _tmp_wObjectID, NULL, NULL, NULL);
 	}
 
 	if (_tmp_iChatIndex != NULL)
@@ -15896,16 +15956,16 @@ void CGame::InitItemList(char * pData)
 			&& (m_pItemList[i]->m_cEquipPos >= 11))
 		{	if(memcmp(m_pItemList[i]->m_cName, "AngelicPendant(STR)", 19) == 0)
 			{	iAngelValue = (m_pItemList[i]->m_dwAttribute & 0xF0000000) >> 28;
-				m_angelStat[STAT_STR] = 1 + iAngelValue;
+				m_angelStat[STAT_STR] = iAngelValue;
 			}else if(memcmp(m_pItemList[i]->m_cName, "AngelicPendant(DEX)", 19) == 0)
 			{	iAngelValue = (m_pItemList[i]->m_dwAttribute & 0xF0000000) >> 28;
-				m_angelStat[STAT_DEX] = 1 + iAngelValue;
+				m_angelStat[STAT_DEX] = iAngelValue;
 			}else if(memcmp(m_pItemList[i]->m_cName, "AngelicPendant(INT)", 19) == 0)
 			{	iAngelValue = (m_pItemList[i]->m_dwAttribute & 0xF0000000) >> 28;
-				m_angelStat[STAT_INT] = 1 + iAngelValue;
+				m_angelStat[STAT_INT] = iAngelValue;
 			}else if(memcmp(m_pItemList[i]->m_cName, "AngelicPendant(MAG)", 19) == 0)
 			{	iAngelValue = (m_pItemList[i]->m_dwAttribute & 0xF0000000) >> 28;
-				m_angelStat[STAT_MAG] = 1 + iAngelValue;
+				m_angelStat[STAT_MAG] = iAngelValue;
 	}	}	}
 
 	cTotalItems = *cp;
@@ -16364,6 +16424,9 @@ void CGame::DrawDialogBoxs(short msX, short msY, short msZ, char cLB)
 			break;
 		case 51: // Gail
 			DrawDialogBox_CMDHallMenu(msX, msY);
+			break;
+		case 52: //50Cent - GMPanel
+			DrawDialogBox_GMPanel(msX, msY);
 			break;
 		case 53:
 			DrawDialogBox_DKMenuWeapons(msX, msY); 
@@ -18150,39 +18213,39 @@ void CGame::DrawDialogBox_IconPannel(short msX, short msY)
 	if (bPfm)
 	{
 		wsprintf(G_cTxt, "%d", m_sPfm);
-		PutString2(625, 12, G_cTxt, 210, 210, 255);
-		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(600, 1, 17, dwTime);
+		PutString2(35, 125, G_cTxt, 210, 210, 255);
+		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(5, 120, 17, dwTime);
 
 	}
 	if (bZerk)
 	{
 		wsprintf(G_cTxt, "%d", m_sZerk);
-		PutString2(588, 12, G_cTxt, 210, 210, 255);
-		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(563, 1, 18, dwTime);
+		PutString2(35, 175, G_cTxt, 210, 210, 255);
+		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(5, 170, 18, dwTime);
 	}
 	if (bInv)
 	{
 		wsprintf(G_cTxt, "%d", m_sInv);
-		PutString2(550, 12, G_cTxt, 210, 210, 255);
-		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(524, 1, 19, dwTime);
+		PutString2(35, 225, G_cTxt, 210, 210, 255);
+		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(5, 220, 19, dwTime);
 	}
 	if (bShield)
 	{
 		wsprintf(G_cTxt, "%d", m_sShield);
-		PutString2(625, 12, G_cTxt, 210, 210, 255);
-		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(600, 1, 20, dwTime);
+		PutString2(35, 275, G_cTxt, 210, 210, 255);
+		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(5, 270, 20, dwTime);
 	}
 	if (bPfa)
 	{
 		wsprintf(G_cTxt, "%d", m_sPfa);
-		PutString2(625, 12, G_cTxt, 210, 210, 255);
-		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(600, 1, 21, dwTime);
+		PutString2(35, 275, G_cTxt, 210, 210, 255);
+		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(5, 270, 21, dwTime);
 	}
 	if (bRage)
 	{
 		wsprintf(G_cTxt, "%d", m_sRage);
-		PutString2(625, 12, G_cTxt, 210, 210, 255);
-		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(600, 1, 22, dwTime);
+		PutString2(35, 275, G_cTxt, 210, 210, 255);
+		m_pSprite[SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(5, 270, 22, dwTime);
 	}
 	if (bEkon) // Ek Announcer By Revan 
 	{
@@ -19442,33 +19505,33 @@ void CGame::UpdateScreen_OnSelectCharacter()
 	{	m_bEnterPressed = FALSE;
 		PlaySound('E', 14, 5);
 
-		if (m_pCharList[m_cCurFocus-1] != NULL)
-		{	if (m_pCharList[m_cCurFocus-1]->m_sSex != NULL)
-			{	ZeroMemory(m_cPlayerName, sizeof(m_cPlayerName));
-				strcpy(m_cPlayerName, m_pCharList[m_cCurFocus-1]->m_cName);
-				m_iLevel = (int)m_pCharList[m_cCurFocus-1]->m_sLevel;
+		if (m_pCharList[m_cCurFocus - 1] != NULL)
+		{
+			if (m_pCharList[m_cCurFocus - 1]->m_sSex != NULL)
+			{
+				ZeroMemory(m_cPlayerName, sizeof(m_cPlayerName));
+				strcpy(m_cPlayerName, m_pCharList[m_cCurFocus - 1]->m_cName);
+				m_iLevel = (int)m_pCharList[m_cCurFocus - 1]->m_sLevel;
 				if (m_Misc.bCheckValidString(m_cPlayerName) == TRUE)
-				{	m_pSprite[SPRID_INTERFACE_ND_LOGIN]->_iCloseSprite();
+				{
+					m_pSprite[SPRID_INTERFACE_ND_LOGIN]->_iCloseSprite();
 					m_pSprite[SPRID_INTERFACE_ND_MAINMENU]->_iCloseSprite();
 					m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-					if (m_iServerSelected == 1){
-						m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-					} 
-					else if (m_iServerSelected == 2){
-						m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-					}
+					m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
 					m_pLSock->bInitBufferSize(30000);
 					ChangeGameMode(GAMEMODE_ONCONNECTING);
-					m_dwConnectMode  = MSGID_REQUEST_ENTERGAME;
+					m_dwConnectMode = MSGID_REQUEST_ENTERGAME;
 					m_wEnterGameType = ENTERGAMEMSGTYPE_NEW;
 					ZeroMemory(m_cMsg, sizeof(m_cMsg));
-					strcpy(m_cMsg,"33");
+					strcpy(m_cMsg, "33");
 					ZeroMemory(m_cMapName, sizeof(m_cMapName));
-					memcpy(m_cMapName, m_pCharList[m_cCurFocus-1]->m_cMapName, 10);
+					memcpy(m_cMapName, m_pCharList[m_cCurFocus - 1]->m_cMapName, 10);
 					delete pMI;
 					return;
-			}	}
-		}else
+				}
+			}
+		}
+		else
 		{	_InitOnCreateNewCharacter();
 			ChangeGameMode(GAMEMODE_ONCREATENEWCHARACTER);
 			delete pMI;
@@ -19508,36 +19571,34 @@ void CGame::UpdateScreen_OnSelectCharacter()
 			if (m_cCurFocus != iMIbuttonNum)
 				m_cCurFocus = iMIbuttonNum;
 			else
-			{	if (m_pCharList[m_cCurFocus-1] != NULL)
-				{	if (m_pCharList[m_cCurFocus-1]->m_sSex != NULL)
-					{	ZeroMemory(m_cPlayerName, sizeof(m_cPlayerName));
-						strcpy(m_cPlayerName, m_pCharList[m_cCurFocus-1]->m_cName);
-						m_iLevel = (int)m_pCharList[m_cCurFocus-1]->m_sLevel;
+			{
+				if (m_pCharList[m_cCurFocus - 1] != NULL)
+				{
+					if (m_pCharList[m_cCurFocus - 1]->m_sSex != NULL)
+					{
+						ZeroMemory(m_cPlayerName, sizeof(m_cPlayerName));
+						strcpy(m_cPlayerName, m_pCharList[m_cCurFocus - 1]->m_cName);
+						m_iLevel = (int)m_pCharList[m_cCurFocus - 1]->m_sLevel;
 						if (m_Misc.bCheckValidString(m_cPlayerName) == TRUE)
-						{	m_pSprite[SPRID_INTERFACE_ND_LOGIN]->_iCloseSprite();
+						{
+							m_pSprite[SPRID_INTERFACE_ND_LOGIN]->_iCloseSprite();
 							m_pSprite[SPRID_INTERFACE_ND_MAINMENU]->_iCloseSprite();
-#ifdef DNSSERVER
-							GetIPByDNS();
-#endif
 							m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-							if (m_iServerSelected == 1){
-								m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-							} 
-							else if (m_iServerSelected == 2){
-							m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-						}
+							m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
 							m_pLSock->bInitBufferSize(30000);
 							ChangeGameMode(GAMEMODE_ONCONNECTING);
-							m_dwConnectMode  = MSGID_REQUEST_ENTERGAME;
+							m_dwConnectMode = MSGID_REQUEST_ENTERGAME;
 							m_wEnterGameType = ENTERGAMEMSGTYPE_NEW;
 							ZeroMemory(m_cMsg, sizeof(m_cMsg));
-							strcpy(m_cMsg,"33");
+							strcpy(m_cMsg, "33");
 							ZeroMemory(m_cMapName, sizeof(m_cMapName));
-							memcpy(m_cMapName, m_pCharList[m_cCurFocus-1]->m_cMapName, 10);
+							memcpy(m_cMapName, m_pCharList[m_cCurFocus - 1]->m_cMapName, 10);
 							delete pMI;
 							return;
-					}	}
-				}else
+						}
+					}
+				}
+				else
 				{	_InitOnCreateNewCharacter();
 					ChangeGameMode(GAMEMODE_ONCREATENEWCHARACTER);
 					delete pMI;
@@ -19548,35 +19609,31 @@ void CGame::UpdateScreen_OnSelectCharacter()
 
 		case 5:
 			if (m_pCharList[m_cCurFocus - 1] != NULL)
-			{	if (m_pCharList[m_cCurFocus-1]->m_sSex != NULL)
-				{	ZeroMemory(m_cPlayerName, sizeof(m_cPlayerName));
-					strcpy(m_cPlayerName, m_pCharList[m_cCurFocus-1]->m_cName);
-					m_iLevel = (int)m_pCharList[m_cCurFocus-1]->m_sLevel;
+			{
+				if (m_pCharList[m_cCurFocus - 1]->m_sSex != NULL)
+				{
+					ZeroMemory(m_cPlayerName, sizeof(m_cPlayerName));
+					strcpy(m_cPlayerName, m_pCharList[m_cCurFocus - 1]->m_cName);
+					m_iLevel = (int)m_pCharList[m_cCurFocus - 1]->m_sLevel;
 
 					if (m_Misc.bCheckValidString(m_cPlayerName) == TRUE) {
 						m_pSprite[SPRID_INTERFACE_ND_LOGIN]->_iCloseSprite();
 						m_pSprite[SPRID_INTERFACE_ND_MAINMENU]->_iCloseSprite();
-#ifdef DNSSERVER
-						GetIPByDNS();
-#endif
 						m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-						if (m_iServerSelected == 1){
-							m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-						}
-						else if (m_iServerSelected == 2){
-							m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-						}
+						m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
 						m_pLSock->bInitBufferSize(30000);
 						ChangeGameMode(GAMEMODE_ONCONNECTING);
-						m_dwConnectMode  = MSGID_REQUEST_ENTERGAME;
+						m_dwConnectMode = MSGID_REQUEST_ENTERGAME;
 						m_wEnterGameType = ENTERGAMEMSGTYPE_NEW;
 						ZeroMemory(m_cMsg, sizeof(m_cMsg));
-						strcpy(m_cMsg,"33");
+						strcpy(m_cMsg, "33");
 						ZeroMemory(m_cMapName, sizeof(m_cMapName));
-						memcpy(m_cMapName, m_pCharList[m_cCurFocus-1]->m_cMapName, 10);
+						memcpy(m_cMapName, m_pCharList[m_cCurFocus - 1]->m_cMapName, 10);
 						delete pMI;
 						return;
-			}	}	}
+					}
+				}
+			}
 			break;
 
 		case 6:
@@ -23309,7 +23366,8 @@ void CGame::UpdateScreen_OnCreateNewCharacter()
 
 		case 24:
 			if (m_cCurFocus != 2)
-			{	m_cCurFocus = 2;
+			{
+				m_cCurFocus = 2;
 				return;
 			}
 			if (bFlag == FALSE) return;
@@ -23317,21 +23375,13 @@ void CGame::UpdateScreen_OnCreateNewCharacter()
 			if (m_Misc.bCheckValidName(cName) == FALSE) break;
 			ZeroMemory(m_cPlayerName, sizeof(m_cPlayerName));
 			strcpy(m_cPlayerName, cName);
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
 			m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-			if (m_iServerSelected == 1){
-				m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
-			}
-			else if (m_iServerSelected == 2){
-				m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port, WM_USER_LOGSOCKETEVENT);
-			}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
 			m_dwConnectMode = MSGID_REQUEST_CREATENEWCHARACTER;
 			ZeroMemory(m_cMsg, sizeof(m_cMsg));
-			strcpy(m_cMsg,"22");
+			strcpy(m_cMsg, "22");
 			delete pMI;
 			return;
 
@@ -23988,16 +24038,9 @@ void CGame::UpdateScreen_OnCreateNewAccount()
 				delete pMI;
 				return;
 			}
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
+
 			m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-			if (m_iServerSelected == 1){
-				m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
-			}
-			else if (m_iServerSelected == 2){
-				m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port, WM_USER_LOGSOCKETEVENT);
-			}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
@@ -24057,16 +24100,9 @@ void CGame::UpdateScreen_OnCreateNewAccount()
 				delete pMI;
 				return;
 			}
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
+
 			m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-			if (m_iServerSelected == 1){
-				m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
-			}
-			else if (m_iServerSelected == 2){
-				m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port, WM_USER_LOGSOCKETEVENT);
-			}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
 			m_dwConnectMode = MSGID_REQUEST_CREATENEWACCOUNT;
@@ -24103,19 +24139,28 @@ void CGame::UpdateScreen_OnCreateNewAccount()
 }
 #endif //endif from #ifdef MAKE_ACCOUNT
 
+
 void CGame::UpdateScreen_OnLogin() // here
 {
- short msX, msY, msZ, sX, sY;
- char cLB, cRB, cMB;
- char cMIresult;
- int  iMIbuttonNum;
- static class CMouseInterface * pMI;
- static char  cPassword[12], cPrevFocus;
- static char cName[12];
+	short msX, msY, msZ, sX, sY;
+	char cLB, cRB, cMB;
+	char cMIresult;
+	int  iMIbuttonNum;
+	static class CMouseInterface * pMI;
+	static char  cPassword[12], cPrevFocus;
+	static char cName[12];
 	sX = 146;
 	sY = 114;
 	if (m_cGameModeCount == 0)
-	{	EndInputString();
+	{
+		EndInputString();
+	/*	pMI = new class CMouseInterface;
+		pMI->AddRect(245, 141, 245 + 131, 141 + 17); // Username
+		pMI->AddRect(245, 165, 245 + 131, 165 + 17); // Password
+		pMI->AddRect(154, 220, 154 + 42, 220 + 19); // Connect
+		pMI->AddRect(324, 220, 324 + 42, 220 + 19); // Cancel
+		pMI->AddRect(153, 140, 153 + 16, 140 + 16); // save username
+		pMI->AddRect(153, 165, 153 + 16, 165 + 16); // save password*/
 		pMI = new class CMouseInterface;
 		pMI->AddRect(180, 193, 408, 208); // Username MOD
 		pMI->AddRect(180, 220, 408, 240); // Password
@@ -24123,7 +24168,7 @@ void CGame::UpdateScreen_OnLogin() // here
 		pMI->AddRect(258, 295, 331, 323); // Cancel
 
 
-		cPrevFocus  = 1;
+		cPrevFocus = 1;
 		m_cCurFocus = 1;
 		m_cMaxFocus = 4;
 		m_bEnterPressed = FALSE;
@@ -24131,14 +24176,21 @@ void CGame::UpdateScreen_OnLogin() // here
 		ZeroMemory(cName, sizeof(cName));
 		ZeroMemory(cPassword, sizeof(cPassword));
 		StartInputString(180, 193, 11, cName);
-		ClearInputString();
+		//StartInputString(245 + 5, 141, 11, cName);
+		//ClearInputString();
+//		strcpy(cName, m_cSavedUsername);
+	//	strcpy(cPassword, m_cSavedPassword);
 	}
+
+//	if ((strlen(m_cSavedUsername) > 0) && (memcmp(m_cSavedUsername, cName, sizeof(m_cSavedUsername)) != 0)) ZeroMemory(m_cSavedUsername, sizeof(m_cSavedUsername));
+//	if ((strlen(m_cSavedPassword) > 0) && (memcmp(m_cSavedPassword, cPassword, sizeof(m_cSavedPassword)) != 0)) ZeroMemory(m_cSavedPassword, sizeof(m_cSavedPassword));
 
 	m_cGameModeCount++;
 	if (m_cGameModeCount > 100) m_cGameModeCount = 100;
 
 	if (m_cArrowPressed != 0)
-	{	switch (m_cArrowPressed) {
+	{
+		switch (m_cArrowPressed) {
 		case 1:
 			m_cCurFocus--;
 			if (m_cCurFocus <= 0) m_cCurFocus = m_cMaxFocus;
@@ -24163,13 +24215,14 @@ void CGame::UpdateScreen_OnLogin() // here
 	}
 
 	if (m_bEnterPressed == TRUE)
-	{	m_bEnterPressed = FALSE;
+	{
+		m_bEnterPressed = FALSE;
 		PlaySound('E', 14, 5);
 
 		switch (m_cCurFocus) {
 		case 1:
 			m_cCurFocus++;
-			if( m_cCurFocus > m_cMaxFocus) m_cCurFocus = 1;
+			if (m_cCurFocus > m_cMaxFocus) m_cCurFocus = 1;
 			break;
 		case 2:
 		case 3:
@@ -24178,16 +24231,8 @@ void CGame::UpdateScreen_OnLogin() // here
 			ZeroMemory(m_cAccountPassword, sizeof(m_cAccountPassword));
 			strcpy(m_cAccountName, cName);
 			strcpy(m_cAccountPassword, cPassword);
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
 			m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-			if (m_iServerSelected == 1){
-				m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-			}
-			else if (m_iServerSelected == 2){
-				m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-			}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
 			m_dwConnectMode = MSGID_REQUEST_LOGIN;
@@ -24203,18 +24248,38 @@ void CGame::UpdateScreen_OnLogin() // here
 #endif
 			delete pMI;
 			return;
-	}	}
+		}
+	}
 
 	if (m_bEscPressed == TRUE)
-	{	EndInputString();
+	{
+		EndInputString();
 		ChangeGameMode(GAMEMODE_ONMAINMENU);
 		delete pMI;
 		m_bEscPressed = FALSE;
 		return;
 	}
 
+/*	if (cPrevFocus != m_cCurFocus)
+	{
+		EndInputString();
+		switch (m_cCurFocus) {
+		case 1:
+			StartInputString(245 + 5, 141, 11, cName);
+			break;
+		case 2:
+			StartInputString(245 + 5, 165, 11, cPassword, TRUE);
+			break;
+		case 3:
+		case 4:
+			break;
+		}
+		cPrevFocus = m_cCurFocus;
+	}*/
+
 	if (cPrevFocus != m_cCurFocus)
-	{	EndInputString();
+	{
+		EndInputString();
 		switch (m_cCurFocus) {
 		case 1:
 			StartInputString(180, 193, 11, cName);
@@ -24229,11 +24294,11 @@ void CGame::UpdateScreen_OnLogin() // here
 		cPrevFocus = m_cCurFocus;
 	}
 
-
 	m_DInput.UpdateMouseState(&msX, &msY, &msZ, &cLB, &cRB, &cMB);
 	iMIbuttonNum = pMI->iGetStatus(msX, msY, cLB, &cMIresult);
 	if (cMIresult == MIRESULT_CLICK)
-	{	PlaySound('E', 14, 5);
+	{
+		PlaySound('E', 14, 5);
 		switch (iMIbuttonNum) {
 		case 1:
 			m_cCurFocus = 1;
@@ -24250,16 +24315,8 @@ void CGame::UpdateScreen_OnLogin() // here
 			ZeroMemory(m_cAccountPassword, sizeof(m_cAccountPassword));
 			strcpy(m_cAccountName, cName);
 			strcpy(m_cAccountPassword, cPassword);
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
 			m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-			if (m_iServerSelected == 1){
-				m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-			}
-			else if (m_iServerSelected == 2){
-				m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port + (rand() % 1), WM_USER_LOGSOCKETEVENT);
-			}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort + (rand() % 1), WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
 			m_dwConnectMode = MSGID_REQUEST_LOGIN;
@@ -24276,15 +24333,35 @@ void CGame::UpdateScreen_OnLogin() // here
 #endif
 			delete pMI;
 			return;
-	}	}
+
+	/*	case 5:
+			if (strlen(m_cSavedUsername) > 0) ZeroMemory(m_cSavedUsername, sizeof(m_cSavedUsername));
+			else strcpy(m_cSavedUsername, cName);
+			break;
+		case 6:
+			if (strlen(m_cSavedPassword) > 0) ZeroMemory(m_cSavedPassword, sizeof(m_cSavedPassword));
+			else strcpy(m_cSavedPassword, cPassword);
+			break;*/
+		}
+	}
+
+	/*if ((msX >= 154) && (msY >= 220) && (msX <= 154 + 42) && (msY <= 220 + 19))
+		m_cCurFocus = 3;
+	if ((msX >= 324) && (msY >= 220) && (msX <= 324 + 42) && (msY <= 220 + 19))
+		m_cCurFocus = 4;
+		*/
 
 	if ((msX >= 86) && (msX <= 144) && (msY >= 295) && (msY <= 323)) m_cCurFocus = 3;
 	if ((msX >= 258) && (msX <= 331) && (msY >= 295) && (msY <= 323)) m_cCurFocus = 4;
+
 
 	_Draw_OnLogin(cName, cPassword, msX, msY, m_cGameModeCount);
 	if (m_DDraw.iFlip() == DDERR_SURFACELOST) RestoreSprites();
 
 }
+
+
+
 
 void CGame::UpdateScreen_OnSelectServer()
 {
@@ -24308,7 +24385,7 @@ void CGame::UpdateScreen_OnSelectServer()
 		pMI->AddRect(125, 231, 282, 250);
 		pMI->AddRect(251, 308, 327, 328);
 
-		cPrevFocus  = 1;
+		cPrevFocus = 1;
 		m_cCurFocus = 1;
 		m_cMaxFocus = 3;
 
@@ -24319,7 +24396,8 @@ void CGame::UpdateScreen_OnSelectServer()
 	if (m_cGameModeCount > 100) m_cGameModeCount = 100;
 
 	if (m_cArrowPressed != 0)
-	{	switch (m_cArrowPressed) {
+	{
+		switch (m_cArrowPressed) {
 		case 1:
 			m_cCurFocus--;
 			if (m_cCurFocus <= 0) m_cCurFocus = m_cMaxFocus;
@@ -24334,21 +24412,20 @@ void CGame::UpdateScreen_OnSelectServer()
 	}
 
 	if (m_bEnterPressed == TRUE)
-	{	m_bEnterPressed = FALSE;
+	{
+		m_bEnterPressed = FALSE;
 		PlaySound('E', 14, 5);
 		switch (m_cCurFocus) {
 		case 1:
-			if (strlen(m_cWorldServerName) ==0)
-			ZeroMemory(m_cWorldServerName, sizeof(m_cWorldServerName));
+			if (strlen(m_cWorldServerName) == 0)
+				ZeroMemory(m_cWorldServerName, sizeof(m_cWorldServerName));
 			strcpy(m_cWorldServerName, NAME_WORLDNAME1);
-			m_iServerSelected = 1;
 			ChangeGameMode(GAMEMODE_ONLOGIN);
 			delete pMI;
 			return;
 
 		case 2:
 			ZeroMemory(m_cWorldServerName, sizeof(m_cWorldServerName));
-			m_iServerSelected = 2;
 			strcpy(m_cWorldServerName, "WS2");
 			ChangeGameMode(GAMEMODE_ONLOGIN);
 			delete pMI;
@@ -24358,28 +24435,30 @@ void CGame::UpdateScreen_OnSelectServer()
 			ChangeGameMode(GAMEMODE_ONMAINMENU);
 			delete pMI;
 			return;
-	}	}
+		}
+	}
 
 	if (m_bEscPressed == TRUE)
-	{	ChangeGameMode(GAMEMODE_ONMAINMENU);
+	{
+		ChangeGameMode(GAMEMODE_ONMAINMENU);
 		delete pMI;
 		m_bEscPressed = FALSE;
 		return;
 	}
 	if (cPrevFocus != m_cCurFocus)
-	{	cPrevFocus = m_cCurFocus;
+	{
+		cPrevFocus = m_cCurFocus;
 	}
 	m_DDraw.ClearBackB4();
-	DrawNewDialogBox(SPRID_INTERFACE_ND_SELECTSCREEN, 0, 0, 0, TRUE);
-	if (m_cGameModeCount > 20) DrawNewDialogBox(SPRID_INTERFACE_ND_SELECTSCREEN, 85, 147, 1, TRUE);
-	else if ((m_cGameModeCount >= 15) && (m_cGameModeCount <= 20)) m_pSprite[SPRID_INTERFACE_ND_SELECTSCREEN]->PutTransSprite25(80, 160, 1, TRUE);
+	DrawNewDialogBox(SPRID_INTERFACE_ND_LOGIN, 0, 0, 0, TRUE);
+	if (m_cGameModeCount > 20) DrawNewDialogBox(SPRID_INTERFACE_ND_LOGIN, 40, 121, 1, TRUE);
+	else if ((m_cGameModeCount >= 15) && (m_cGameModeCount <= 20)) m_pSprite[SPRID_INTERFACE_ND_LOGIN]->PutTransSprite25(40, 121, 1, TRUE);
 
-	// Revan Adjust Sprite frame
 	if (m_cGameModeCount > 20)
 	{
-		if (m_cCurFocus == 1) DrawNewDialogBox(SPRID_INTERFACE_ND_SELECTSCREEN, 134, 203, 3, TRUE);
-		if (m_cCurFocus == 2) DrawNewDialogBox(SPRID_INTERFACE_ND_SELECTSCREEN, 119, 234, 4, TRUE);
-		if (m_cCurFocus == 3) DrawNewDialogBox(SPRID_INTERFACE_ND_SELECTSCREEN, 245, 311, 2, TRUE);
+		if (m_cCurFocus == 1) DrawNewDialogBox(SPRID_INTERFACE_ND_LOGIN, 138, 177, 5, TRUE);
+		if (m_cCurFocus == 2) DrawNewDialogBox(SPRID_INTERFACE_ND_LOGIN, 130, 205, 6, TRUE);
+		if (m_cCurFocus == 3) DrawNewDialogBox(SPRID_INTERFACE_ND_LOGIN, 256, 282, 4, TRUE);
 	}
 	DrawVersion();
 	m_DInput.UpdateMouseState(&msX, &msY, &msZ, &cLB, &cRB, &cMB);
@@ -24394,7 +24473,6 @@ void CGame::UpdateScreen_OnSelectServer()
 			if (m_cCurFocus == 1) {
 				ZeroMemory(m_cWorldServerName, sizeof(m_cWorldServerName));
 				strcpy(m_cWorldServerName, NAME_WORLDNAME1);
-				m_iServerSelected = 1;
 				ChangeGameMode(GAMEMODE_ONLOGIN);
 				delete pMI;
 				return;
@@ -24406,7 +24484,6 @@ void CGame::UpdateScreen_OnSelectServer()
 			if (m_cCurFocus == 2) {
 				ZeroMemory(m_cWorldServerName, sizeof(m_cWorldServerName));
 				strcpy(m_cWorldServerName, "WS2");
-				m_iServerSelected = 2;
 				ChangeGameMode(GAMEMODE_ONLOGIN);
 				delete pMI;
 				return;
@@ -24420,7 +24497,6 @@ void CGame::UpdateScreen_OnSelectServer()
 			return;
 		}
 	}
-
 	// Revan Adjust Sprite frame
 	if ((msX >= 140) && (msX <= 267) && (msY >= 200) && (msY <= 219)) m_cCurFocus = 1;
 	if ((msX >= 125) && (msX <= 282) && (msY >= 231) && (msY <= 250)) m_cCurFocus = 2;
@@ -24578,16 +24654,14 @@ void CGame::OnKeyUp(WPARAM wParam)
 			}
 		}
 		break;
-#ifdef _DEBUG
+
 	case 81://'Q'
-		if( ( m_bCtrlPressed == TRUE ) && ( m_cGameMode == GAMEMODE_ONMAINGAME ) )
-		{	ZeroMemory(m_cChatMsg, sizeof(m_cChatMsg) );
-			strcpy(m_cChatMsg, "/enableadmincommand 147258 ");
-			StartInputString(10, 414, sizeof(m_cChatMsg), m_cChatMsg);
-			//ClearInputString();
-		}
+		if ((m_bCtrlPressed == TRUE) && (m_cGameMode == GAMEMODE_ONMAINGAME))
+		{
+			if (m_bIsDialogEnabled[52] == TRUE) DisableDialogBox(52);
+			else EnableDialogBox(52, 0, 0, 0, NULL);
+			}
 		break;
-#endif
 
 	case 82://'R'
 		if (m_bCtrlPressed == TRUE && m_cGameMode == GAMEMODE_ONMAINGAME && (!m_bInputStatus) )
@@ -25174,16 +25248,8 @@ void CGame::UpdateScreen_OnQueryForceLogin()
 	{	PlaySound('E', 14, 5);
 		switch (iMIbuttonNum) {
 		case 1:
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
 			m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-			if (m_iServerSelected == 1){
-				m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
-			}
-			else if (m_iServerSelected == 2){
-				m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port, WM_USER_LOGSOCKETEVENT);
-			}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
 			m_dwConnectMode  = MSGID_REQUEST_ENTERGAME;
@@ -25563,21 +25629,13 @@ void CGame::UpdateScreen_OnQueryDeleteCharacter()
 	{	PlaySound('E', 14, 5);
 		switch (iMIbuttonNum) {
 		case 1:
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
 			m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-				if (m_iServerSelected == 1){
-				m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
-			}
-			else if (m_iServerSelected == 2){
-				m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port, WM_USER_LOGSOCKETEVENT);
-			}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
-			m_dwConnectMode  = MSGID_REQUEST_DELETECHARACTER;
+			m_dwConnectMode = MSGID_REQUEST_DELETECHARACTER;
 			ZeroMemory(m_cMsg, sizeof(m_cMsg));
-			strcpy(m_cMsg,"33");
+			strcpy(m_cMsg, "33");
 			delete pMI;
 			return;
 
@@ -26775,6 +26833,17 @@ void CGame::NotifyMsgHandler(char * pData)
 		}else
 		{	m_stDialogBoxInfo[32].cMode = 3;
 		}
+		break;
+
+		//50Cent - HP Bar
+	case SEND_NPCHP:
+		cp = (char *)(pData + INDEX2_MSGTYPE + 2);
+		ip = (int *)cp;
+		iNpcHP = *ip;
+		cp += 4;
+		ip = (int *)cp;
+		iNpcMaxHP = *ip;
+		cp += 4;
 		break;
 
 	case NOTIFY_DAMAGEMOVE:
@@ -28402,9 +28471,9 @@ void CGame::UpdateScreen_OnChangePassword()
 			break;
 
 		case 5:	// Connect
-			if ( (m_Misc.bCheckValidString(cPassword) == FALSE) || (strlen(cPassword) == 0) ||
-				 (m_Misc.bCheckValidName(cNewPassword) == FALSE) || (m_Misc.bCheckValidName(cNewPassConfirm) == FALSE) ||
-				 (strlen(cNewPassword) == 0) || (memcmp(cNewPassword, cNewPassConfirm, 10) != 0) ) break;
+			if ((m_Misc.bCheckValidString(cPassword) == FALSE) || (strlen(cPassword) == 0) ||
+				(m_Misc.bCheckValidName(cNewPassword) == FALSE) || (m_Misc.bCheckValidName(cNewPassConfirm) == FALSE) ||
+				(strlen(cNewPassword) == 0) || (memcmp(cNewPassword, cNewPassConfirm, 10) != 0)) break;
 
 			ZeroMemory(m_cAccountName, sizeof(m_cAccountName));
 			ZeroMemory(m_cAccountPassword, sizeof(m_cAccountPassword));
@@ -28414,16 +28483,8 @@ void CGame::UpdateScreen_OnChangePassword()
 			strcpy(m_cAccountPassword, cPassword);
 			strcpy(m_cNewPassword, cNewPassword);
 			strcpy(m_cNewPassConfirm, cNewPassConfirm);
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
 			m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-			if (m_iServerSelected == 1){
-				m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
-			}
-			else if (m_iServerSelected == 2){
-				m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port, WM_USER_LOGSOCKETEVENT);
-			}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
 			m_dwConnectMode = MSGID_REQUEST_CHANGEPASSWORD;
@@ -28555,16 +28616,8 @@ void CGame::UpdateScreen_OnChangePassword()
 			strcpy(m_cAccountPassword, cPassword);
 			strcpy(m_cNewPassword, cNewPassword);
 			strcpy(m_cNewPassConfirm, cNewPassConfirm);
-#ifdef DNSSERVER
-			GetIPByDNS();
-#endif
 						m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
-						if (m_iServerSelected == 1){
-							m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
-						}
-						else if (m_iServerSelected == 2){
-							m_pLSock->bConnect(m_cLogWs2ServerAddr, m_iLogServerWs2Port, WM_USER_LOGSOCKETEVENT);
-						}
+			m_pLSock->bConnect(m_cLogServerAddr, m_iLogServerPort, WM_USER_LOGSOCKETEVENT);
 			m_pLSock->bInitBufferSize(30000);
 			ChangeGameMode(GAMEMODE_ONCONNECTING);
 			m_dwConnectMode = MSGID_REQUEST_CHANGEPASSWORD;
@@ -28745,13 +28798,64 @@ void CGame::DrawNpcName(short sX, short sY, short sOwnerType, int iStatus)
 	case 8: strcpy(cTxt2, DRAW_OBJECT_NAME59); break;//"Critical Explosive"
 	case 9: strcpy(cTxt2, DRAW_OBJECT_NAME59B); break;//"Highly Trained"
 	}
-	if( m_Misc.bCheckIMEString(cTxt2) ) PutString_SprFont3(sX, sY + 28, cTxt2, m_wR[13]*4, m_wG[13]*4, m_wB[13]*4, FALSE, 2);
-	else PutString2(sX, sY + 28, cTxt2, 240,240,70);
+	if (m_Misc.bCheckIMEString(cTxt2)) PutString_SprFont3(sX, sY + 42, cTxt2, m_wR[13] * 4, m_wG[13] * 4, m_wB[13] * 4, FALSE, 2);
+	else PutString2(sX, sY + 42, cTxt2, 240, 240, 70);
 
-#ifdef _DEBUG
-	wsprintf(G_cTxt,"Status: 0x%.8X ",iStatus);
-	PutString2(sX+70, sY+(14*0), G_cTxt, 30,255,30);
-#endif
+
+	// centu: no muestra la barra de hp de algunos npc
+	switch (sOwnerType) {
+	case 15:
+	case 19:
+	case 20:
+	case 21:
+	case 24:
+	case 25:
+	case 26:
+	case 42:
+	case 67:
+	case 68:
+	case 69:
+	case 64:
+	{	switch ((_tmp_sAppr2 & 0xFF00) >> 8) {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+	case 8:
+	case 9:
+	case 10:
+	case 11:
+	case 12:
+	case 13:
+	case 14:
+	default:
+		break;
+	}
+	}
+	case 90:
+		break;
+	default:
+		//50Cent - HP Bar 
+		//Centuu - fixed
+		if (m_npcbar)
+		{
+		if (iNpcHP > 0)
+		{
+			wsprintf(G_cTxt, "Health: %d/%d", iNpcHP, iNpcMaxHP);
+			PutString_SprFont3(sX, sY + 28, G_cTxt, m_wR[3] * 8, m_wG[3] * 8, m_wB[3] * 8, FALSE, 2);
+			ZeroMemory(G_cTxt, sizeof(G_cTxt));
+
+			/*	if( m_Misc.bCheckIMEString(cTxt2) ) PutString_SprFont3(sX, sY + 28, cTxt2, m_wR[13]*4, m_wG[13]*4, m_wB[13]*4, FALSE, 2);
+			else PutString2(sX, sY + 28, cTxt2, 240,240,70);	*/
+		}
+		break;
+		}
+	}
+
+
 }
 
 void CGame::DrawObjectName(short sX, short sY, char * pName, int iStatus)
@@ -29365,11 +29469,22 @@ BOOL CGame::bCheckLocalChatCommand(char * pMsg)
 			AddEventList(BCHECK_LOCAL_CHAT_COMMAND11, 10);
 		m_showTimeStamp = !m_showTimeStamp;
 		return TRUE;
-	}else if (memcmp(cBuff, "/showgrid", 9)==0 || memcmp(cBuff, "/grid", 5)==0)
-	{	
+	}
+	else if (memcmp(cBuff, "/questlog", 9) == 0)
+	{
+		m_bQuestLog = !m_bQuestLog;
+		return TRUE;
+	}
+	else if (memcmp(cBuff, "/showgrid", 9) == 0 || memcmp(cBuff, "/grid", 5) == 0)
+	{
 		m_showGrid = !m_showGrid;
 		return TRUE;
-	}else if (memcmp(cBuff, "/showalldmg", 11)==0)
+	}else if (memcmp(cBuff, "/shownpcbar", 11) == 0 || memcmp(cBuff, "/npcbar", 7) == 0)
+	{
+		m_npcbar = !m_npcbar;
+		return TRUE;
+	}
+	else if (memcmp(cBuff, "/showalldmg", 11)==0)
 	{
 		if(!m_showAllDmg)
 			AddEventList(BCHECK_LOCAL_CHAT_COMMAND12, 10);
@@ -29386,7 +29501,13 @@ BOOL CGame::bCheckLocalChatCommand(char * pMsg)
 			AddEventList(BCHECK_LOCAL_CHAT_COMMAND23, 10);
 		m_showtyping = !m_showtyping;
 		return TRUE;
-	}else if (memcmp(cBuff, "/bigitems", 9)==0)
+	}
+	else if (memcmp(cBuff, "/showtime", 9) == 0)
+	{
+		m_showTime = !m_showTime;
+		return TRUE;
+	}
+	else if (memcmp(cBuff, "/bigitems", 9)==0)
 	{	
 		if(!m_bigItems)
 			AddEventList(BCHECK_LOCAL_CHAT_COMMAND14, 10);
@@ -31008,9 +31129,9 @@ void CGame::UpdateScreen_OnGame()
 		}
 	}
 
-	if(iUpdateRet && m_stQuest.sQuestType) {
-		DrawQuestHelper();
-	}
+	//if(iUpdateRet && m_stQuest.sQuestType) {
+	//	DrawQuestHelper();
+	//}
 
 #ifdef _DEBUG
 	if(iUpdateRet){
@@ -31146,11 +31267,28 @@ void CGame::UpdateScreen_OnGame()
 			if (friendsList[f].updated == false)
 				friendsList[f].online = false;
 
-	if( iUpdateRet != 0 )
-	{	if( m_bShowFPS )
-		{	
-			wsprintf( G_cTxt, "Real FPS: %d", m_iFPS );
-			PutString( 10, 100, G_cTxt, RGB(255,255,255) );
+	if (iUpdateRet != 0)
+	{
+		if (m_bShowFPS)
+		{
+			/*	wsprintf( G_cTxt, "FPS: %d", m_iFPS );
+			PutString( 10, 100, G_cTxt, RGB(255,255,255) );*/
+
+			wsprintf(G_cTxt, "Helbreath Silence - ONLINE:(%.3d) FPS:(%.3d)", m_iTotalUsers, m_iFPS);
+			PutString_SprFont3(175, 5, G_cTxt, m_wR[5] * 8, m_wG[5] * 8, m_wB[5] * 8, FALSE, 2);
+			ZeroMemory(G_cTxt, sizeof(G_cTxt));
+
+
+		}
+		if (m_bQuestLog)
+		{
+			DrawQuestHelper();
+		}
+
+		if (m_showTime)
+		{
+			wsprintf(G_cTxt, "%d", timeGetTime() / 1000 % 60);
+			PutString(10, 100, G_cTxt, RGB(255, 255, 255), FALSE, 1);
 		}
 		if( m_DDraw.iFlip() == DDERR_SURFACELOST ) RestoreSprites();
 	}
@@ -39679,7 +39817,7 @@ void CGame::NotifyMsg_MagicEffectOn(char * pData)
 		case 1:
 			AddEventList(NOTIFYMSG_MAGICEFFECT_ON16, 10);
 			bRage = true;// Auras by Revan 5/19/16
-			m_sRage = 60;
+			m_sRage = 30;
 			break;
 		}
 		break;
@@ -40016,9 +40154,7 @@ void CGame::NotifyMsg_ServerChange(char * pData)
 	{	delete m_pLSock;
 		m_pLSock = NULL;
 	}
-#ifdef DNSSERVER
-	GetIPByDNS();
-#endif
+
 	m_pLSock = new class XSocket(m_hWnd, SOCKETBLOCKLIMIT);
 	if (m_iGameServerMode == 1) // LAN
 	{	m_pLSock->bConnect(m_cLogServerAddr, iWorldServerPort, WM_USER_LOGSOCKETEVENT);
@@ -40178,13 +40314,11 @@ void CGame::NotifyMsg_SP(char * pData)
 }
 
 void CGame::NotifyMsg_TotalUsers(char * pData)
-{	
+{
 	WORD *wp;
 	int iTotal;
 	wp = (WORD *)(pData + INDEX2_MSGTYPE + 2);
-	iTotal = (int)*wp;
-	wsprintf(G_cTxt, NOTIFYMSG_TOTAL_USER1, iTotal);
-	AddEventList(G_cTxt, 10);
+	m_iTotalUsers = (int)*wp;
 }
 
 void CGame::NotifyMsg_RelicInAltar(char * pData)
@@ -42645,16 +42779,16 @@ void CGame::ItemEquipHandler(char cItemID)
 	{	int iAngelValue = 0;
 		if(memcmp(m_pItemList[cItemID]->m_cName, "AngelicPendant(STR)", 19) == 0)
 		{	iAngelValue = (m_pItemList[cItemID]->m_dwAttribute & 0xF0000000) >> 28;
-			m_angelStat[STAT_STR] = 1 + iAngelValue;
+			m_angelStat[STAT_STR] = iAngelValue;
 		}else if(memcmp(m_pItemList[cItemID]->m_cName, "AngelicPendant(DEX)", 19) == 0)
 		{	iAngelValue = (m_pItemList[cItemID]->m_dwAttribute & 0xF0000000) >> 28;
-			m_angelStat[STAT_DEX] = 1 + iAngelValue;
+			m_angelStat[STAT_DEX] = iAngelValue;
 		}else if(memcmp(m_pItemList[cItemID]->m_cName, "AngelicPendant(INT)", 19) == 0)
 		{	iAngelValue = (m_pItemList[cItemID]->m_dwAttribute & 0xF0000000) >> 28;
-			m_angelStat[STAT_INT] = 1 + iAngelValue;
+			m_angelStat[STAT_INT] = iAngelValue;
 		}else if(memcmp(m_pItemList[cItemID]->m_cName, "AngelicPendant(MAG)", 19) == 0)
 		{	iAngelValue = (m_pItemList[cItemID]->m_dwAttribute & 0xF0000000) >> 28;
-			m_angelStat[STAT_MAG] = 1 + iAngelValue;
+			m_angelStat[STAT_MAG] = iAngelValue;
 	}	}
 
 	char cStr1[64], cStr2[64], cStr3[64];
@@ -44612,24 +44746,329 @@ void CGame::DlgBoxClick_GuideMap(short msX, short msY)
 		PlaySound('E', 14, 5);
 	}
 }
-void CGame::GetIPByDNS()
-{
-	ZeroMemory(m_cLogServerAddr, sizeof(m_cLogServerAddr));
 
-		char cDnsResult[40];
-		struct hostent *host_entry;
 
-		host_entry = gethostbyname(SERVER_DNS);
-		if (host_entry == NULL){
-			MessageBox(m_hWnd, "Failed to get DNS entry for the logserver!", "ERROR1", MB_ICONEXCLAMATION | MB_OK);
-			_exit(0);
+short CGame::CheckAngelicStatus() {
+
+	int iAngelValue = 0;
+
+	for (int i = 0; i < MAXITEMS; i++) {
+		if (m_pItemList[i] != NULL) {
+			if (strcmp(m_pItemList[i]->m_cName, "AngelicPendant(STR)") == 0 ||
+				strcmp(m_pItemList[i]->m_cName, "AngelicPendant(DEX)") == 0 ||
+				strcmp(m_pItemList[i]->m_cName, "AngelicPendant(INT)") == 0 ||
+				strcmp(m_pItemList[i]->m_cName, "AngelicPendant(MAG)") == 0) {
+				for (int x = 0; x < MAXITEMEQUIPPOS; x++) {
+					if (m_sItemEquipmentStatus[x] == i) {
+						iAngelValue = (m_pItemList[i]->m_dwAttribute & 0xF0000000) >> 28;
+						return iAngelValue;
+					}
+				}
+			}
 		}
-		ZeroMemory(cDnsResult, sizeof(cDnsResult));
-		wsprintf(cDnsResult, "%d.%d.%d.%d",
-			(host_entry->h_addr_list[0][0] & 0x00ff),
-			(host_entry->h_addr_list[0][1] & 0x00ff),
-			(host_entry->h_addr_list[0][2] & 0x00ff),
-			(host_entry->h_addr_list[0][3] & 0x00ff));
+	}
+	iAngelValue = -1;
+	return iAngelValue;
+}
 
-		strcpy(m_cLogServerAddr, cDnsResult);
+
+
+
+void CGame::DlgBoxClick_GMPanel(short msX, short msY)
+{
+	short sX, sY;
+	sX = m_stDialogBoxInfo[52].sX;
+	sY = m_stDialogBoxInfo[52].sY;
+	switch (m_stDialogBoxInfo[52].cMode) {
+	case 0:
+		// m_bShowFPS
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 85) && (msY < sY + 100))
+		{
+			if (!m_bShowFPS)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND24, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND25, 10);
+			m_bShowFPS = !m_bShowFPS;
+			return;
+		}
+		// m_showTimeStamp
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 100) && (msY < sY + 115))
+		{
+			if (!m_showTimeStamp)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND10, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND11, 10);
+			m_showTimeStamp = !m_showTimeStamp;
+			return;
+		}
+		// m_showGrid
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 115) && (msY < sY + 130))
+		{
+			m_showGrid = !m_showGrid;
+		}
+		// m_showAllDmg
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 130) && (msY < sY + 145))
+		{
+			if (!m_showAllDmg)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND12, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND13, 10);
+			m_showAllDmg = !m_showAllDmg;
+			return;
+		}
+		// m_bigItems
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 145) && (msY < sY + 160))
+		{
+			if (!m_bigItems)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND14, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND15, 10);
+			m_bigItems = !m_bigItems;
+			return;
+		}
+		// m_ekScreenshot
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 160) && (msY < sY + 175))
+		{
+			if (!m_ekScreenshot)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND16, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND17, 10);
+			m_ekScreenshot = !m_ekScreenshot;
+			return;
+		}
+		// m_tabbedNotification
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 175) && (msY < sY + 190))
+		{
+			if (!m_tabbedNotification)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND18, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND19, 10);
+			m_tabbedNotification = !m_tabbedNotification;
+			return;
+		}
+		// m_manuAutoFill
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 190) && (msY < sY + 205))
+		{
+			if (!m_manuAutoFill)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND12, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND13, 10);
+			m_manuAutoFill = !m_manuAutoFill;
+			return;
+		}
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 205) && (msY < sY + 220))
+		{
+			if (!m_bQuestLog)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND30, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND31, 10);
+			m_bQuestLog = !m_bQuestLog;
+			return;
+		}
+
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 220) && (msY < sY + 235))
+		{
+			if (!m_bigTrees)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND26, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND27, 10);
+			m_bigTrees = !m_bigTrees;
+			return;
+		}
+
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 235) && (msY < sY + 250))
+		{
+			if (!m_showTime)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND28, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND29, 10);
+			m_showTime = !m_showTime;
+			return;
+		}
+
+		if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 250) && (msY < sY + 265))
+		{
+			if (!m_npcbar)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND32, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND33, 10);
+			m_npcbar = !m_npcbar;
+			return;
+		}
+
+	/*	if ((msX > sX + 30) && (msX < sX + 215) && (msY > sY + 265) && (msY < sY + 280))
+		{
+			if (!m_showtyping)
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND22, 10);
+			else
+				AddEventList(BCHECK_LOCAL_CHAT_COMMAND23, 10);
+			m_showtyping = !m_showtyping;
+			return;
+		}*/
+
+		break;
+	}
+}
+void CGame::DrawDialogBox_GMPanel(short msX, short msY)
+{
+	short sX, sY, szX;
+
+	sX = m_stDialogBoxInfo[52].sX;
+	sY = m_stDialogBoxInfo[52].sY;
+	szX = m_stDialogBoxInfo[52].sSizeX;
+
+
+	DrawNewDialogBox(SPRID_INTERFACE_ND_GAME2, sX, sY, 2, FALSE, m_bDialogTrans);
+
+	switch (m_stDialogBoxInfo[52].cMode) {
+	case 0:
+
+		PutString_SprFont(sX + 55, sY + 35, "Extended menu", 1, 1, 8);
+
+		wsprintf(G_cTxt, "Game Version 1.01");
+		PutString2(sX + 58, sY + 50, G_cTxt, 255, 240, 0);
+		PutString2(sX + 30, sY + 70, DEF_CATEG_STATUSTOOLS, 255, 200, 0);														 
+		PutString2(sX + 180, sY + 70, DEF_CATEG_PLAYERMANIP, 255, 200, 0);
+
+
+		wsprintf(G_cTxt, "Game Version 1.01");
+		PutString2(sX + 58, sY + 50, G_cTxt, 255, 240, 0);
+
+		wsprintf(G_cTxt, "Show FPS and Online Players");
+		PutString2(sX + 30, sY + 85, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Time stamps in chat");
+		PutString2(sX + 30, sY + 100, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Show GRID");
+		PutString2(sX + 30, sY + 115, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Dmg is shown by groups");
+		PutString2(sX + 30, sY + 130, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Show big items on ground");
+		PutString2(sX + 30, sY + 145, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "EK Auto Screenshot");
+		PutString2(sX + 30, sY + 160, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Outside notification");
+		PutString2(sX + 30, sY + 175, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Auto manufacturing");
+		PutString2(sX + 30, sY + 190, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Show quest information");
+		PutString2(sX + 30, sY + 205, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Show small Trees");
+		PutString2(sX + 30, sY + 220, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Show timing");
+		PutString2(sX + 30, sY + 235, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Show monsters hp bar");
+		PutString2(sX + 30, sY + 250, G_cTxt, 255, 255, 255);
+
+		/*	wsprintf(G_cTxt, "Show player typing");
+		PutString2(sX + 30, sY + 265, G_cTxt, 255, 255, 255);
+
+		wsprintf(G_cTxt, "Show timing");
+		PutString2(sX + 30, sY + 280, G_cTxt, 255, 255, 255);
+
+		*/
+
+		if (!m_bShowFPS)
+		{
+			PutString2(sX + 200, sY + 85, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 85, SHOW_ON, 0, 255, 0);
+
+		if (!m_showTimeStamp)
+		{
+			PutString2(sX + 200, sY + 100, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 100, SHOW_ON, 0, 255, 0);
+
+		if (!m_showGrid)
+		{
+			PutString2(sX + 200, sY + 115, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 115, SHOW_ON, 0, 255, 0);
+
+		if (!m_showAllDmg)
+		{
+			PutString2(sX + 200, sY + 130, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 130, SHOW_ON, 0, 255, 0);
+
+		if (!m_bigItems)
+		{
+			PutString2(sX + 200, sY + 145, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 145, SHOW_ON, 0, 255, 0);
+
+		if (!m_ekScreenshot)
+		{
+			PutString2(sX + 200, sY + 160, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 160, SHOW_ON, 0, 255, 0);
+
+		if (!m_tabbedNotification)
+		{
+			PutString2(sX + 200, sY + 175, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 175, SHOW_ON, 0, 255, 0);
+
+		if (!m_manuAutoFill)
+		{
+			PutString2(sX + 200, sY + 190, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 190, SHOW_ON, 0, 255, 0);
+
+		if (!m_bQuestLog)
+		{
+			PutString2(sX + 200, sY + 205, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 205, SHOW_ON, 0, 255, 0);
+
+		if (!m_bigTrees)
+		{
+			PutString2(sX + 200, sY + 220, SHOW_ON, 0, 255, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 220, SHOW_OFF, 255, 0, 0);
+
+		if (!m_showTime)
+		{
+			PutString2(sX + 200, sY + 235, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 235, SHOW_ON, 0, 255, 0);
+
+		if (!m_npcbar)
+		{
+			PutString2(sX + 200, sY + 250, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 250, SHOW_ON, 0, 255, 0);
+
+	/*	if (!m_showtyping)
+		{
+			PutString2(sX + 200, sY + 265, SHOW_OFF, 255, 0, 0);
+		}
+		else
+			PutString2(sX + 200, sY + 265, SHOW_ON, 0, 255, 0);
+			*/
+		break;
+	}
 }

@@ -90,6 +90,9 @@ public:
 	int  m_iExpDice;
 	DWORD dwGoldDropValue;
 
+	//50Cent - HP Bar
+	int m_iMaxHP;
+
 	char m_cActionLimit;
 
 	char m_cSize;

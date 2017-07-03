@@ -3,23 +3,25 @@
 
 #define MSG_HOMEPAGE		"http://www.helbreathint.com/"
 
-#define SELECTSERVER		// Show/Hides server selection screen.
+//#define SELECTSERVER		// Show/Hides server selection screen.
 //#define DNSSERVER			// uses dns adress
 
 #define NAME_WORLDNAME1		"Abaddon" // Name for default (1st) server
-#define MSG_WORLDNAME1		"180/200 Low-Rate Server" // Long name for 1st server...
-#define SERVER_DNS			"HBInternational.ddns.net"
+#define MSG_WORLDNAME1		"Helbreath Genesia II" // Long name for 1st server...
 #define SERVER_PORT			321
 #define SERVER_IP			"192.168.1.182"
-//#define SERVER_IP			"72.74.19.224"
+
 
 #define NAME_WORLDNAME2		"WS2"
 #define MSG_WORLDNAME2		"High-Rate Server"
 #define WS2_SERVER_IP		"192.168.1.182"
 #define WS2_SERVER_PORT		321
 
+
+
 #define LANG	ENGLISH
 //#define LANG	SPANISH
+//#define SERVER_IP			"72.74.19.224"
 
 #ifdef _DEBUG
 #define SPEEDHAX_RUN		1.5

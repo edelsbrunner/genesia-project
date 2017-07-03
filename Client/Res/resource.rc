@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Korean resources
+// Korejština (Korea) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
-#ifdef _WIN32
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 #pragma code_page(949)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -29,6 +27,7 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICON1               ICON                    "icon1.ico"
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -61,8 +60,8 @@ END
 // Dialog
 //
 
-IDD_COMMON DIALOG DISCARDABLE  35, 10, 249, 198
-STYLE WS_POPUP
+IDD_COMMON DIALOG 35, 10, 249, 198
+STYLE DS_SETFONT | WS_POPUP
 FONT 10, "System"
 BEGIN
     PUSHBUTTON      "OK",IDOK,201,183,38,11,BS_BITMAP | NOT WS_TABSTOP
@@ -76,7 +75,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_COMMON, DIALOG
     BEGIN
@@ -94,21 +93,23 @@ END
 //
 
 IDB_BIT_DLG             BITMAP                  "htmlview(24).BMP"
+
 IDB_BIT_OKBN            BITMAP                  "_OK.bmp"
+
 IDB_BIT_CANCLEBN        BITMAP                  "CANCEL.bmp"
+
 IDB_BIT_CONNECTBN       BITMAP                  "CONNECT.bmp"
-#endif    // Korean resources
+
+#endif    // Korejština (Korea) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.K.) resources
+// Angliètina (Spojené království) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -132,11 +133,11 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-            VALUE "FileDescription", "HBInt's Client"
+            VALUE "FileDescription", "HBGenesia Client"
             VALUE "FileVersion", "0, 9, 3, 0"
             VALUE "InternalName", "client"
-            VALUE "LegalCopyright", "Copyright (C) 2009"
-            VALUE "ProductName", "Helbreath Dragon"
+            VALUE "LegalCopyright", "Copyright (C) 2017"
+            VALUE "ProductName", "Helbreath Genesia"
             VALUE "ProductVersion", "0, 9, 3, 0"
         END
     END
@@ -146,7 +147,7 @@ BEGIN
     END
 END
 
-#endif    // English (U.K.) resources
+#endif    // Angliètina (Spojené království) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

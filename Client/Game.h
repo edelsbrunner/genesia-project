@@ -150,7 +150,12 @@ class CGame
 {
 public:
 
-	void GetIPByDNS();
+	// Check Angelic Status
+	short CheckAngelicStatus();
+
+	void DrawDialogBox_GMPanel(short msX, short msY);
+	void DlgBoxClick_GMPanel(short msX, short msY);
+
 
 	void NotifyMsg_Heldenian(char * pData);
 	void DrawHeldenianStats();
@@ -826,11 +831,14 @@ public:
 	int m_iFPS;
 	DWORD m_dwFPStime;
 	BOOL  m_bShowFPS;
+	BOOL  m_bQuestLog;
 	bool  m_showGrid;
 	bool  m_showAllDmg;
 	bool  m_showtyping;
-	bool  m_bigItems;
+	bool  m_bigItems, m_bigTrees;
 	bool  m_showTimeStamp;
+	bool  m_showTime;
+	bool  m_npcbar;
 
 	int m_iFightzoneNumber;
 	int m_iFightzoneNumberTemp;
@@ -1028,6 +1036,13 @@ public:
 	char m_cTakeHeroItemName[100]; //Drajwer - hero item str
 
 	int m_levelExpTable[MAXLEVEL +20];
+
+	int m_iTotalUsers;
+	DWORD m_dwCheckWhoTime;
+
+	//50Cent - HP Bar
+	BOOL Mandando;
+	int iNpcHP, iNpcMaxHP;
 
 	std::set<string> m_MuteList;
 

@@ -1,3 +1,42 @@
+//50Cent - GMPanel
+#define DEF_WARNING "*No deberias estar viendo esto. D:<*"
+
+#define DEF_CATEG_STATUSTOOLS "Commands"
+#define DEF_CATEG_SERVERMANIP "Server Manipulation"
+#define DEF_CATEG_PLAYERMANIP "ON/OFF"
+
+#define SHOW_FRAMES				"Show FPS"
+#define SHOW_TIMESTAMP			"Time stamps"
+#define SHOW_GRID				"Show GRID"
+#define SHOW_ALLDMG				"Dmg is shown by groups"
+#define SHOW_BIGITEMS			"Items on ground are now"
+#define SHOW_EKSCREEN			"EK Auto Screenshot"
+#define SHOW_NOTIFY				"Outside notification"
+#define SHOW_MANUFILL			"Auto manufacturing"
+#define SHOW_ON					"ON"
+#define SHOW_OFF				"OFF"
+#define SHOW_SMALL				"SMALL"
+#define SHOW_BIG				"BIG"
+
+
+
+#define	BCHECK_LOCAL_CHAT_COMMAND30	"Quest Count is now turned on."
+#define	BCHECK_LOCAL_CHAT_COMMAND31	"Quest Count is now turned off."
+
+#define	BCHECK_LOCAL_CHAT_COMMAND24 "Your frames per second is now turned on"
+#define	BCHECK_LOCAL_CHAT_COMMAND25 "Your frames per second is now turned off"
+
+#define	BCHECK_LOCAL_CHAT_COMMAND26	"Trees are now shown as large."
+#define	BCHECK_LOCAL_CHAT_COMMAND27	"Trees are now shown as small."
+
+#define	BCHECK_LOCAL_CHAT_COMMAND28	"Show timing is now turned on"
+#define	BCHECK_LOCAL_CHAT_COMMAND29	"Show timing is now turned off"
+
+#define	BCHECK_LOCAL_CHAT_COMMAND32	"NPC bar is now turned on"
+#define	BCHECK_LOCAL_CHAT_COMMAND33	"NPC bar is now turned off"
+
+
+
 
 #define QUESTHELPER			"Quest Helper"
 #define QUESTHELPERCOMPLETE	"Quest Completed!"
@@ -11,7 +50,7 @@
 #define NPCLVL7		"Lvl 135~160"
 #define NPCLVL8		"Boss"
 #define NPCLVL9		"Elite"
-
+ 
 #define MSG_KILLER1 "50+ Kills"
 #define MSG_KILLER2 "100+ Kills" 
 #define MSG_KILLER3 "150+ Kills" 

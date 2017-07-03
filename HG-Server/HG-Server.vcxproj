@@ -14,7 +14,7 @@
     <ProjectGuid>{036B368E-0460-4662-9E93-B7E0386DB116}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HGServer</RootNamespace>
-    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
